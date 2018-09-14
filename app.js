@@ -1,7 +1,7 @@
 'use strict';
 
 const qs = require('koa-qs');
-const tools = require('./app/common/tools');
+const tools = require('./util/tools');
 module.exports = app => {
   app.beforeStart(async () => {
     // 查询参数解析为对象

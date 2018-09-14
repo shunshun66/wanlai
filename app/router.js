@@ -32,5 +32,10 @@ module.exports = app => {
   router.get('/api/business/getAllGoodsOfReceive', controller.business.getAllGoodsOfReceive);
   router.get('/api/business/getSumPayOfReceive', controller.business.getSumPayOfReceive);
   router.get('/api/business/getSumPayOfSender', controller.business.getSumPayOfSender);
+  router.get('/api/business/getGoodsById', controller.business.getGoodsById);
+  /** 客户管理路由 */
+  router.resources('myuser', '/api/myuser', controller.myuser);
+  router.get('/api/myuser', controller.myuser.index);
+  router.get('/api/myuser/findByName', controller.myuser.findByName);
 
 };
