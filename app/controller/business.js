@@ -169,6 +169,44 @@ class BusinessController extends Controller {
   }
 
   /**
+   * 获取已付款的业务信息
+   */
+  async getPayGoodsOfSender() {
+    const { ctx } = this;
+    const user = ctx.session.user || ctx.request.user;
+    const confirmStatus = ctx.query.status || '3';
+    let page = ctx.query.page || { current: 1, limit: 10 };
+
+    try {
+      if (typeof page === 'string') {
+        page = JSON.parse(page);
+      }
+      let search = { sendOpenid: user.weixin_openid, status: { $gte: confirmStatus } };
+      const value = ctx.query.value;
+      if (value) {
+        const strValue = new RegExp(value);
+        const subsql = {
+          $or: [
+            {
+              goodsName: strValue,
+            },
+            {
+              reciveName: strValue,
+            },
+          ],
+        };
+        search = _.merge(search, subsql);
+      }
+      const goodsPage = await listQuery(ctx.model.Business, search, '', '-sendDate reciveOpenid', page);
+      ctx.body = goodsPage;
+    } catch (err) {
+      ctx.logger.error(err);
+      ctx.body = { err: '获取已付款信息失败' };
+    }
+
+  }
+
+  /**
    * 获取收货用户不同交易状态的交易信息
    * parameter: status    交易状态
    */
@@ -248,31 +286,50 @@ class BusinessController extends Controller {
             sendOpenid: {
               $first: '$sendOpenid',
             },
+            sendName: {
+              $first: '$sendName',
+            },
           },
         },
       ]);
-      if (goodsinfos.length === 0) {
-        ctx.body = goodsinfos;
-        return;
-      }
-      const userOpenids = _.map(goodsinfos, item => {
-        return item.sendOpenid;
-      });
-      const userNames = await ctx.model.User.find({ weixin_openid: { $in: userOpenids } }, 'weixin_openid, name');
-      const userInfos = {};
-      _.forEach(userNames, item => {
-        userInfos[item.weixin_openid] = item.name;
-      });
-      ctx.body = _.map(goodsinfos, item => {
-        item.name = userInfos[item.sendOpenid];
-        return item;
-      });
+      ctx.body = goodsinfos;
+      return;
     } catch (err) {
       ctx.logger.error(err);
       ctx.body = { err: '查询已付款统计信息失败' };
     }
   }
 
+  /**
+   * 获取总的付款金额
+   */
+  async getTotalMoneyOfReceive() {
+    const { ctx } = this;
+    const user = ctx.session.user || ctx.request.user;
+    try {
+      const goodsinfos = await ctx.model.Business.aggregate([
+        {
+          $match: {
+            reciveOpenid: user.weixin_openid,
+            status: { $in: [ '3', '4' ] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            payments: {
+              $sum: '$payments',
+            },
+          },
+        },
+      ]);
+      ctx.body = goodsinfos[0];
+      return;
+    } catch (err) {
+      ctx.logger.error(err);
+      ctx.body = { err: '获取总的付款金额失败' };
+    }
+  }
   /**
    * 统计用户的已经收款的信息
    */
@@ -284,7 +341,7 @@ class BusinessController extends Controller {
         {
           $match: {
             sendOpenid: user.weixin_openid,
-            status: '4',
+            status: { $in: [ '3', '4' ] },
           },
         },
         {
@@ -304,31 +361,48 @@ class BusinessController extends Controller {
             reciveOpenid: {
               $first: '$reciveOpenid',
             },
+            reciveName: {
+              $first: '$reciveName',
+            },
           },
         },
       ]);
-      if (goodsinfos.length === 0) {
-        ctx.body = goodsinfos;
-        return;
-      }
-      const userOpenids = _.map(goodsinfos, item => {
-        return item.reciveOpenid;
-      });
-      const userNames = await ctx.model.User.find({ weixin_openid: { $in: userOpenids } }, 'weixin_openid, name');
-      const userInfos = {};
-      _.forEach(userNames, item => {
-        userInfos[item.weixin_openid] = item.name;
-      });
-      ctx.body = _.map(goodsinfos, item => {
-        item.name = userInfos[item.reciveOpenid];
-        return item;
-      });
+      ctx.body = goodsinfos;
     } catch (err) {
       ctx.logger.error(err);
       ctx.body = { err: '查询已收款统计信息失败' };
     }
   }
 
+  /**
+   * 获取总的收款金额
+   */
+  async getTotalMoneyOfSender() {
+    const { ctx } = this;
+    const user = ctx.session.user || ctx.request.user;
+    try {
+      const goodsinfos = await ctx.model.Business.aggregate([
+        {
+          $match: {
+            sendOpenid: user.weixin_openid,
+            status: { $in: [ '3', '4' ] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            payments: {
+              $sum: '$payments',
+            },
+          },
+        },
+      ]);
+      ctx.body = goodsinfos[0];
+    } catch (err) {
+      ctx.logger.error(err);
+      ctx.body = { err: '查询总的收款金额失败' };
+    }
+  }
 }
 
 /**

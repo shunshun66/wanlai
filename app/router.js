@@ -33,9 +33,13 @@ module.exports = app => {
   router.get('/api/business/getSumPayOfReceive', controller.business.getSumPayOfReceive);
   router.get('/api/business/getSumPayOfSender', controller.business.getSumPayOfSender);
   router.get('/api/business/getGoodsById', controller.business.getGoodsById);
+  router.get('/api/business/getPayGoodsOfSender', controller.business.getPayGoodsOfSender);
+  router.get('/api/business/getTotalMoneyOfReceive', controller.business.getTotalMoneyOfReceive);
+  router.get('/api/business/getTotalMoneyOfSender', controller.business.getTotalMoneyOfSender);
   /** 客户管理路由 */
   router.resources('myuser', '/api/myuser', controller.myuser);
   router.get('/api/myuser', controller.myuser.index);
   router.get('/api/myuser/findByName', controller.myuser.findByName);
+  router.get('/api/myuser/getMyuserBypage', controller.myuser.getMyuserBypage);
 
 };

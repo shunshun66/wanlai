@@ -1,6 +1,7 @@
 'use strict';
 
 const Controller = require('egg').Controller;
+const { listQuery } = require('../common/paging');
 const _ = require('lodash');
 class MyuserController extends Controller {
   async index() {
@@ -93,6 +94,33 @@ class MyuserController extends Controller {
     } catch (err) {
       ctx.logger.error(err);
       ctx.body = { err: '删除客户信息失败' };
+    }
+  }
+
+  /**
+   * 分页获取我的用户
+   */
+  async getMyuserBypage() {
+    const { ctx } = this;
+    const user = ctx.session.user || ctx.request.user;
+    let page = ctx.query.page || { current: 1, limit: 10 };
+
+    try {
+      if (typeof page === 'string') {
+        page = JSON.parse(page);
+      }
+      let search = { userID: user._id };
+      const value = ctx.query.value;
+      if (value) {
+        const strValue = new RegExp(value);
+        const subsql = { name: strValue };
+        search = _.merge(search, subsql);
+      }
+      const userPage = await listQuery(ctx.model.Myuser, search, '', 'name', page);
+      ctx.body = userPage;
+    } catch (err) {
+      ctx.logger.error(err);
+      ctx.body = { err: '获取我的客户信息失败' };
     }
   }
 }

@@ -28,7 +28,7 @@
     "node": ">=8.9.0"
   },
   "scripts": {
-    "start": "egg-scripts start --daemon --title=egg-server-wanlai",
+    "start": "egg-scripts start --port 9000 --daemon --title=egg-server-wanlai",
     "stop": "egg-scripts stop --title=egg-server-wanlai",
     "dev": "egg-bin dev",
     "debug": "egg-bin debug",

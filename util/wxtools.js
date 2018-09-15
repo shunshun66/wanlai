@@ -19,7 +19,7 @@ const getWxToken = async (ctx, appid, appsecret) => {
   access_token = wxResult.data.access_token;
   setTimeout(function() {
     access_token = null;
-  }, wxResult.data.expires_in * 1000);
+  }, wxResult.data.expires_in * 500);
   return access_token;
 };
 
@@ -38,7 +38,7 @@ const sendTemplateMsg = async (ctx, token, msgData) => {
     dataType: 'json',
   });
   if (result.data.errcode) {
-    ctx.logger.error(result.data.errmsg);
+    ctx.logger.error(`code: ${result.data.errcode}, msg: ${result.data.errmsg}`);
     return false;
   }
   ctx.logger.info(`template_id:${result.data.template_id}`);

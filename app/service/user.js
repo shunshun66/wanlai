@@ -9,37 +9,28 @@ class UserService extends Service {
    * 分页查询用户信息
    */
   async pageFind() {
+
+    const { ctx } = this;
+    let page = ctx.query.page || { current: 1, limit: 10 };
+
     try {
-
-      let search = this.ctx.query.search;
-      let page = this.ctx.query.page;
-      if (!search) {
-        search = {};
+      if (typeof page === 'string') {
+        page = JSON.parse(page);
       }
-      if (_.isString(search)) {
-        search = JSON.parse(search)
+      let search = { role: 'guest' };
+      const value = ctx.query.value;
+      if (value) {
+        const strValue = new RegExp(value);
+        const subsql = { name: strValue };
+        search = _.merge(search, subsql);
       }
-      if (_.isString(page)) {
-        page = JSON.parse(page)
-      }
-
-      // 修改为模糊查询
-      for (const key in search) {
-        search[key] = new RegExp(search[key])
-      }
-      const user = this.ctx.session.user ? this.ctx.session.user : this.ctx.req.user
-      if (user.role !== 'admin') {
-        search = _.merge(search, {
-          companyID: user.companyID
-        })
-      }
-      const userModel = this.ctx.model.User
-      const results = await paging.listQuery(userModel, search, '', '-update_time', page)
-      return results
+      const userModel = ctx.model.User;
+      const results = await paging.listQuery(userModel, search, 'name weixin_openid', 'name', page);
+      return results;
     } catch (err) {
       return {
-        err: err
-      }
+        err,
+      };
     }
   }
 
