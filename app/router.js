@@ -9,7 +9,7 @@ module.exports = app => {
     controller,
   } = app;
   router.get('/', controller.home.index);
-  /**用户管理路由 */
+  /** 用户管理路由 */
   router.resources('users', '/api/user', controller.user);
   router.post('/api/user/login', controller.user.login);
   router.post('/api/user/wxlogin', controller.user.wxlogin);
@@ -18,12 +18,14 @@ module.exports = app => {
   router.get('/api/user/getall', controller.user.getAll);
   router.get('/api/user/getUsers', controller.user.getUsers);
 
-  /**图片素材管理路由 */
+  /** 图片素材管理路由 */
   router.get('/api/imgmng', controller.imgmng.index);
   router.post('/api/imgmng/imgupload', controller.imgmng.imgUpload);
   router.put('/api/imgmng/delimg', controller.imgmng.delImg);
   /** 广告图片 */
-  router.get('/api/banner', controller.banner.index);
+  router.resources('banner', '/api/banner', controller.banner);
+  router.get('/api/banner/getbannerById', controller.banner.getBannerById);
+  router.get('/api/banner/getAdvert', controller.banner.getAdvert);
   /** 交易路由 */
   router.resources('business', '/api/business', controller.business);
   router.get('/api/business/getGoodsOfSender', controller.business.getGoodsOfSender);
