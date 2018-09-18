@@ -25,7 +25,7 @@ class UserService extends Service {
         search = _.merge(search, subsql);
       }
       const userModel = ctx.model.User;
-      const results = await paging.listQuery(userModel, search, 'name weixin_openid', 'name', page);
+      const results = await paging.listQuery(userModel, search, '', 'name', page);
       return results;
     } catch (err) {
       return {

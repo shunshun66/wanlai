@@ -3,7 +3,7 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
 const { listQuery } = require('../common/paging');
-const { getWxToken, sendTemplateMsg } = require('../../util/wxtools');
+const { getWxToken, sendTemplateMsg, sendUniformMsg, sendCustomerMsg } = require('../../util/wxtools');
 class BusinessController extends Controller {
 /**
    * 新建往来信息
@@ -22,19 +22,9 @@ class BusinessController extends Controller {
       const newGoods = new ctx.model.Business(form);
       const goods = await newGoods.save();
       ctx.body = goods;
-      // 保存常用客户
-      const myuser = new  ctx.model.Myuser({
-        name: ctx.request.body.nickname,
-        weixin_openid: ctx.request.body.reciveOpenid,
-        userID: user._id,
-      });
-      try {
-        await myuser.save();
-      } catch (err) {
-        ctx.logger.info(err);
-      }
+
       // 发送发货模板消息
-      sendGoodsMsg(ctx, WXAPPID, WXSECRET, form.form_id, user.name, goods).then(result => {
+      sendGoodsCustomerMsg(ctx, WXAPPID, WXSECRET, form.form_id, user.name, goods).then(result => {
         if (result) {
           ctx.logger.info('发货模板消息发送成功');
         } else {
@@ -69,7 +59,7 @@ class BusinessController extends Controller {
         const { WXAPPID, WXSECRET } = this.app.config;
         const user = ctx.session.user || ctx.request.user;
         // 发送付款的模板消息
-        sendPayMsg(ctx, WXAPPID, WXSECRET, reqBody.form_id, user.name, newGoods).then(result => {
+        sendGoodsMsg(ctx, WXAPPID, WXSECRET, reqBody.form_id, user.name, newGoods).then(result => {
           if (result) {
             ctx.logger.info('付款模板消息发送成功');
           } else {
@@ -101,7 +91,7 @@ class BusinessController extends Controller {
   /**
    * 获取货物清单信息
    * parameter: id      记录ID
-   * parameter: flag    收发货方标识   
+   * parameter: flag    收发货方标识
    */
   async getGoodsById() {
     const { ctx } = this;
@@ -407,12 +397,12 @@ class BusinessController extends Controller {
 
 /**
  * 发送发货模板消息
- * @param {*} ctx 
- * @param {*} appid 
- * @param {*} secret 
- * @param {*} formId 
- * @param {*} nickname 
- * @param {*} form 
+ * @param {*} ctx
+ * @param {*} appid
+ * @param {*} secret
+ * @param {*} formId
+ * @param {*} nickname
+ * @param {*} form
  */
 async function sendGoodsMsg(ctx, appid, secret, formId, nickname, form)  {
   const pageurl = `/pages/goods/goods?id=${form._id}&flag=receive`;
@@ -448,12 +438,12 @@ async function sendGoodsMsg(ctx, appid, secret, formId, nickname, form)  {
 
 /**
  * 发送付款模板消息
- * @param {*} ctx 
- * @param {*} appid 
- * @param {*} secret 
- * @param {*} formId 
- * @param {*} nickname 
- * @param {*} form 
+ * @param {*} ctx
+ * @param {*} appid
+ * @param {*} secret
+ * @param {*} formId
+ * @param {*} nickname
+ * @param {*} form
  */
 async function sendPayMsg(ctx, appid, secret, formId, nickname, form)  {
   const pageurl = `/pages/goods/goods?id=${form._id}&flag=confirm`;
@@ -485,6 +475,57 @@ async function sendPayMsg(ctx, appid, secret, formId, nickname, form)  {
   };
   const token = await getWxToken(ctx, appid, secret);
   const result = await sendTemplateMsg(ctx, token, msgData);
+  return result;
+}
+
+async function sendGoodsUniformMsg(ctx, appid, secret, formId, nickname, form)  {
+  const pageurl = `/pages/goods/goods?id=${form._id}&flag=receive`;
+  const nowTime = new Date().toLocaleDateString();
+  const msgData = {
+    touser: form.reciveOpenid,
+    weapp_template_msg: {
+      template_id: 'UJIBL-IwXY_7iQC0aQPszUrPw9IZDhzBgmK5GvY5cv4',
+      page: pageurl,
+      form_id: formId,
+      data: {
+        keyword1: {
+          value: nickname,
+        },
+        keyword2: {
+          value: nowTime,
+        },
+        keyword3: {
+          value: form.goodsName,
+        },
+        keyword4: {
+          value: `${form.payments}元`,
+        },
+        keyword5: {
+          value: `${form.amount}斤`,
+        },
+      },
+      emphasis_keyword: 'keyword3.DATA',
+    },
+  };
+  const token = await getWxToken(ctx, appid, secret);
+  const result = await sendUniformMsg(ctx, token, msgData);
+  return result;
+}
+
+async function sendGoodsCustomerMsg(ctx, appid, secret, formId, nickname, form)  {
+  const pageurl = `/pages/goods/goods?id=${form._id}&flag=receive`;
+  const msgData = {
+    touser: form.reciveOpenid,
+    msgtype: 'miniprogrampage',
+    miniprogrampage: {
+      title: `${form.goodsName}发货通知`,
+      pagepath: pageurl,
+      thumb_media_id: 'yFOUq3N2-h4zqNkHC5xaMxXRscg0UhnAxP9HczkIEnjC_F5YTz8W2NGwcUUWoWVk',
+    },
+  };
+  const token = await getWxToken(ctx, appid, secret);
+  console.log(`token: ${token}`);
+  const result = await sendCustomerMsg(ctx, token, msgData);
   return result;
 }
 

@@ -45,7 +45,53 @@ const sendTemplateMsg = async (ctx, token, msgData) => {
   return true;
 };
 
+/**
+ * 发送统一服务消息
+ * @param {*} ctx
+ * @param {*} token 
+ * @param {*} msgData 
+ */
+const sendUniformMsg = async (ctx, token, msgData) => {
+  const wxurl = `https://api.weixin.qq.com/cgi-bin/message/wxopen/template/uniform_send?access_token=${token}`;
+  const result = await ctx.curl(wxurl, {
+    method: 'POST',
+    contentType: 'json',
+    data: msgData,
+    dataType: 'json',
+  });
+  if (result.data.errcode) {
+    ctx.logger.error(`code: ${result.data.errcode}, msg: ${result.data.errmsg}`);
+    return false;
+  }
+  ctx.logger.info(`template_id:${result.data.template_id}`);
+  return true;
+};
+
+/**
+ * 发送统一服务消息
+ * @param {*} ctx
+ * @param {*} token 
+ * @param {*} msgData 
+ */
+const sendCustomerMsg = async (ctx, token, msgData) => {
+  const wxurl = `https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=${token}`;
+  const result = await ctx.curl(wxurl, {
+    method: 'POST',
+    contentType: 'json',
+    data: msgData,
+    dataType: 'json',
+  });
+  if (result.data.errcode) {
+    ctx.logger.error(`code: ${result.data.errcode}, msg: ${result.data.errmsg}`);
+    return false;
+  }
+  ctx.logger.info(`template_id:${result.data.template_id}`);
+  return true;
+};
+
 module.exports = {
   getWxToken,
   sendTemplateMsg,
+  sendUniformMsg,
+  sendCustomerMsg,
 };
