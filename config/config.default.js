@@ -55,5 +55,29 @@ module.exports = appInfo => {
   };
   // 上传文件的目录
   config.uploads = path.join(appInfo.baseDir, '/app/public/static/uploads');
+  config.io = {
+    init: {}, // passed to engine.io
+    namespace: {
+      '/': {
+        connectionMiddleware: [ 'socketauth' ],
+        packetMiddleware: [],
+      },
+    },
+    redis: {
+      host: '127.0.0.1',
+      port: 6379,
+      auth_pass: 'nutshell750090',
+      db: 0,
+    },
+  };
+  // redis插件的设置
+  config.redis = {
+    client: {
+      port: 6379, // Redis port
+      host: '127.0.0.1', // Redis host
+      password: 'nutshell750090',
+      db: 0,
+    },
+  };
   return config;
 };

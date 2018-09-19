@@ -7,7 +7,9 @@
     "await-stream-ready": "^1.0.1",
     "egg": "^2.2.1",
     "egg-mongoose": "^3.1.0",
+    "egg-redis": "^2.0.0",
     "egg-scripts": "^2.5.0",
+    "egg-socket.io": "^4.1.2",
     "jimp": "^0.4.0",
     "jsonwebtoken": "^8.3.0",
     "koa-qs": "^2.0.0",
@@ -28,9 +30,9 @@
     "node": ">=8.9.0"
   },
   "scripts": {
-    "start": "egg-scripts start --port 9000 --daemon --title=egg-server-wanlai",
+    "start": "egg-scripts start --port 9000 --daemon --title=egg-server-wanlai --sticky",
     "stop": "egg-scripts stop --title=egg-server-wanlai",
-    "dev": "egg-bin dev",
+    "dev": "egg-bin dev --sticky",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",

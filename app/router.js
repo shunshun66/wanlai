@@ -7,6 +7,7 @@ module.exports = app => {
   const {
     router,
     controller,
+    io,
   } = app;
   router.get('/', controller.home.index);
   /** 用户管理路由 */
@@ -43,5 +44,8 @@ module.exports = app => {
   router.get('/api/myuser', controller.myuser.index);
   router.get('/api/myuser/findByName', controller.myuser.findByName);
   router.get('/api/myuser/getMyuserBypage', controller.myuser.getMyuserBypage);
-
+  /** formids的路由 */
+  router.post('/api/formids/saveFormids', controller.formids.SaveFormids);
+  /** websocket 路由 */
+  io.of('/').route('exchange', io.controller.nsp.exchange);
 };

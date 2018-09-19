@@ -24,7 +24,12 @@ class BusinessController extends Controller {
       ctx.body = goods;
 
       // 发送发货模板消息
-      sendGoodsCustomerMsg(ctx, WXAPPID, WXSECRET, form.form_id, user.name, goods).then(result => {
+      const reciveFormid = await getFormid(app.redis, goods.reciveOpenid);
+      if (!reciveFormid) {
+        ctx.logger.info(`${goods.reciveName}没有formid`);
+        return;
+      }
+      sendGoodsMsg(ctx, WXAPPID, WXSECRET, reciveFormid, user.name, goods).then(result => {
         if (result) {
           ctx.logger.info('发货模板消息发送成功');
         } else {
@@ -41,7 +46,7 @@ class BusinessController extends Controller {
    * 更新往来信息
    */
   async update() {
-    const { ctx } = this;
+    const { ctx, app } = this;
     const reqBody = ctx.request.body;
     if (reqBody._id) {
       delete reqBody._id;
@@ -59,7 +64,12 @@ class BusinessController extends Controller {
         const { WXAPPID, WXSECRET } = this.app.config;
         const user = ctx.session.user || ctx.request.user;
         // 发送付款的模板消息
-        sendGoodsMsg(ctx, WXAPPID, WXSECRET, reqBody.form_id, user.name, newGoods).then(result => {
+        const reciveFormid = await getFormid(app.redis, newGoods.sendOpenid);
+        if (!reciveFormid) {
+          ctx.logger.info(`${newGoods.reciveName}没有formid`);
+          return;
+        }
+        sendPayMsg(ctx, WXAPPID, WXSECRET, reciveFormid, user.name, newGoods).then(result => {
           if (result) {
             ctx.logger.info('付款模板消息发送成功');
           } else {
@@ -527,6 +537,30 @@ async function sendGoodsCustomerMsg(ctx, appid, secret, formId, nickname, form) 
   console.log(`token: ${token}`);
   const result = await sendCustomerMsg(ctx, token, msgData);
   return result;
+}
+
+/**
+ * 从redis中获取openid的formid
+ * @param {*} redis 
+ * @param {*} openid 
+ */
+async function getFormid(redis, openid) {
+  const len = await redis.llen(openid);
+  const nowTime = new Date().getTime();
+  try {
+    for (let n = 0; n < len; n++) {
+      const form = await redis.lpop(openid);
+      const jsonform = JSON.parse(form);
+      if (jsonform.expire > nowTime) {
+        return jsonform.formid;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+
 }
 
 module.exports = BusinessController;
